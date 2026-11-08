@@ -1,4 +1,4 @@
-import { KeyBinding } from "@opentui/core";
+import type { KeyBinding } from "@opentui/core";
 import { StatusBar } from "./status-bar";
 import { CommandMenu } from "./command-menu";
 import {useRef,useCallback,useEffect} from "react";
@@ -6,6 +6,7 @@ import type { TextareaRenderable } from "@opentui/core";
 import { useRenderer } from "@opentui/react";
 import { useCommandMenu } from "./command-menu/use-command-menu";
 import type { Command } from "./command-menu/types";   
+import {useToast} from "../providers/toast";
 
 type Props={
     onSubmit: (value:string)=>void;
@@ -23,6 +24,7 @@ export function InputBar({onSubmit,disabled}:Props){
     const textareaRef=useRef<TextareaRenderable | null>(null);
     const onSubmitRef= useRef<()=>void>(()=>{});
     const renderer= useRenderer();
+    const toast= useToast();
     const {
         showCommandMenu,
         commandQuery,
@@ -32,11 +34,6 @@ export function InputBar({onSubmit,disabled}:Props){
         resolveCommand,
         setSelectedIndex,
     }= useCommandMenu();
-
-    const handleCommandExecute= useCallback((index: number)=>{
-        const command = resolveCommand(index);
-        handleCommand(command);
-    },[])
 
     const handelTextareaContentChange= useCallback(()=>{
         const textarea = textareaRef.current;
@@ -64,11 +61,19 @@ export function InputBar({onSubmit,disabled}:Props){
         if(command.action){
             command.action({
                 exit:()=>renderer.destroy(),
+                toast,
             });
         }else{
             textarea.insertText(command.value + " ");
         }
-    },[renderer]);
+    },[renderer,toast]);
+
+    // Must depend on resolveCommand: it closes over the *filtered* list,
+    // so an empty deps array would always resolve against the full list.
+    const handleCommandExecute= useCallback((index: number)=>{
+        const command = resolveCommand(index);
+        handleCommand(command);
+    },[resolveCommand,handleCommand]);
 
     useEffect(()=>{
         const textarea = textareaRef.current;
@@ -92,7 +97,7 @@ export function InputBar({onSubmit,disabled}:Props){
         <box width="100%" alignItems="center">
             <box
                 border={["left","right"]}
-                borderColor="cyan Bright"> 
+                borderColor="brightcyan">
                 <box
                     position="relative"
                     justifyContent="center"
@@ -116,6 +121,7 @@ export function InputBar({onSubmit,disabled}:Props){
                                 selectedIndex={selectedIndex}
                                 onSelect={setSelectedIndex}
                                 onExecute={handleCommandExecute}
+                                scrollBoxRef={scrollRef}
                             />
                         </box>
                     )}

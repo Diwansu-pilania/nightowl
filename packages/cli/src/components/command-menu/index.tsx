@@ -26,16 +26,16 @@ export function CommandMenu({
 
     if(filtered.length === 0) {
         return (
-            <box style={{ height: visibleHeight * 1.2 + "em", overflow: "hidden" }}>
-                <box style={{ color: TextAttributes.DIM, padding: "0.5em" }}>
-                    <text>No commands found</text>
-                </box>
+            <box height={1} paddingX={1}>
+                <text selectable={false} attributes={TextAttributes.DIM} fg="gray">
+                    No commands found
+                </text>
             </box>
         );
     }
 
     return (
-        <scrollbox ref={scrollBoxRef} height={MAX_VISIBLE_COMMANDS}>
+        <scrollbox ref={scrollBoxRef} height={visibleHeight}>
             {filtered.map((cmd, index) => {
                 const isSelected = index ===selectedIndex;
 
