@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from "bun:test";
 import { Database } from "bun:sqlite";
-import { readdirSync } from "node:fs";
+import { cpSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { SessionStore } from "./session-store";
 import { temporaryDatabase } from "../test/fixtures";
@@ -39,9 +39,11 @@ test("upgrades v1 with a consistent backup including WAL data and preserves hist
     expect(store.messages(session.id)[0]?.content).toBe("Keep this history");
     store.setSelection(session.id, { provider: "openrouter", model: "new-model" });
     expect(store.switches(session.id)[0]).toMatchObject({ fromModel: "legacy-model", toModel: "new-model" });
-    const backups = readdirSync(dirname(path)).filter((file) => file.includes(".v1-"));
+    const backups = readdirSync(dirname(path)).filter((file) => file.includes(".v1-") && file.endsWith(".sqlite"));
     expect(backups).toHaveLength(1);
-    const backup = new Database(join(dirname(path), backups[0]!), { readonly: true });
+    const portableBackup = join(dirname(path), "portable-backup.sqlite");
+    cpSync(join(dirname(path), backups[0]!), portableBackup);
+    const backup = new Database(portableBackup, { readonly: true });
     expect(backup.query("PRAGMA user_version").get()).toEqual({ user_version: 1 });
     expect(backup.query("PRAGMA journal_mode").get()).toEqual({ journal_mode: "delete" });
     expect(backup.query("PRAGMA integrity_check").get()).toEqual({ integrity_check: "ok" });
@@ -84,8 +86,10 @@ test("upgrades v2 with a WAL-aware backup, preserving model selection and switch
     expect(store.switches("old-session")).toHaveLength(1);
     expect(store.messages("old-session")[0]?.content).toBe("Keep this history");
     expect(store.contextState("old-session")).toEqual({ notes: "", forceCompact: false, overrides: {} });
-    const backupName = readdirSync(dirname(path)).find((name) => name.includes(".v2-"))!;
-    const backup = new Database(join(dirname(path), backupName), { readonly: true });
+    const backupName = readdirSync(dirname(path)).find((name) => name.includes(".v2-") && name.endsWith(".sqlite"))!;
+    const portableBackup = join(dirname(path), "portable-backup.sqlite");
+    cpSync(join(dirname(path), backupName), portableBackup);
+    const backup = new Database(portableBackup, { readonly: true });
     expect(backup.query("PRAGMA user_version").get()).toEqual({ user_version: 2 });
     expect(backup.query("PRAGMA journal_mode").get()).toEqual({ journal_mode: "delete" });
     expect(backup.query("PRAGMA integrity_check").get()).toEqual({ integrity_check: "ok" });
