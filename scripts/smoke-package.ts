@@ -7,11 +7,16 @@ import metadata from "../package.json";
 
 const prefix = join(tmpdir(), "nightowl-release-smoke-");
 const directory = mkdtempSync(prefix);
-const archive = resolve(import.meta.dir, `../dist/releases/nightowl-v${metadata.version}-windows-x64.zip`);
+const archive = process.argv[2] ? resolve(process.argv[2]) : resolve(import.meta.dir, `../dist/releases/nightowl-v${metadata.version}-windows-x64.zip`);
 try {
     const expected = readFileSync(`${archive}.sha256`, "utf8").split(/\s/)[0];
     if (createHash("sha256").update(readFileSync(archive)).digest("hex") !== expected) throw new Error("Archive checksum mismatch.");
-    if (Bun.spawnSync(["tar", "-xf", archive, "-C", directory]).exitCode !== 0) throw new Error("Could not unpack archive.");
+    // Check Windows-compatible entry names and use a different ZIP reader from
+    // the packager. Native Explorer/WinRAR extraction is also checked at release.
+    const extraction = Bun.spawnSync(["powershell.exe", "-NoProfile", "-NonInteractive", "-File",
+        resolve(import.meta.dir, "extract-release.ps1"), "-ArchivePath", archive, "-DestinationPath", directory],
+        { stdout: "inherit", stderr: "inherit" });
+    if (extraction.exitCode !== 0) throw new Error("Windows release archive validation/extraction failed.");
     const binary = join(directory, "nightowl.exe");
     const env = { ...process.env, NIGHTOWL_DATA_DIR: join(directory, "data"), OPENROUTER_API_KEY: "", NIGHTOWL_PROVIDER: "", NIGHTOWL_MODEL: "", OLLAMA_BASE_URL: "" };
     // An arbitrary workspace cannot override the distributed launcher's config.
@@ -41,7 +46,7 @@ try {
     if ((db.query("SELECT COUNT(*) AS count FROM attempts").get() as { count: number }).count !== 0) throw new Error("Import unexpectedly created a request attempt.");
     db.close();
     for (const file of ["LICENSE", "THIRD_PARTY_NOTICES.txt", "BUN-LICENSE.md", "REBUILD.md"]) if (!readdirSync(directory).includes(file)) throw new Error(`Missing ${file}`);
-    console.log("PASS: unpacked Windows CLI, checksum, portable sessions, dotenv isolation, and license notices.");
+    console.log("PASS: Windows ZIP paths/extraction, CLI, checksum, portable sessions, dotenv isolation, and license notices.");
 } finally {
     const target = resolve(directory);
     if (!target.startsWith(resolve(prefix)) || target === resolve(tmpdir())) throw new Error("Unsafe smoke cleanup path.");
