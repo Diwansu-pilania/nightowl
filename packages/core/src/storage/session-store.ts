@@ -113,8 +113,16 @@ export class SessionStore {
             if (version >= 3) return; // Another process may have completed the migration while we waited.
             const owners = this.db.query<{ owner_pid: number }, []>("SELECT owner_pid FROM sessions WHERE owner IS NOT NULL AND owner_pid IS NOT NULL").all();
             if (owners.some((row) => processIsAlive(row.owner_pid))) throw new Error("Close other NightOwl processes before upgrading saved sessions.");
-            // serialize() includes committed WAL content. Back up before the first schema change.
-            if (path !== ":memory:") writeFileSync(`${path}.v${version}-${Date.now()}-${crypto.randomUUID()}.sqlite`, this.db.serialize(), { flag: "wx", mode: 0o600 });
+            // serialize() includes committed WAL content. Normalize the snapshot to
+            // rollback-journal format so read-only readers need no WAL/SHM sidecars
+            // (including macOS's system SQLite). Finish before any schema change.
+            if (path !== ":memory:") {
+                const backupPath = `${path}.v${version}-${Date.now()}-${crypto.randomUUID()}.sqlite`;
+                writeFileSync(backupPath, this.db.serialize(), { flag: "wx", mode: 0o600 });
+                const backup = new Database(backupPath);
+                try { backup.exec("PRAGMA journal_mode = DELETE;"); }
+                finally { backup.close(); }
+            }
             if (version === 1) this.db.exec(`
                 ALTER TABLE sessions ADD COLUMN selected_provider TEXT;
                 ALTER TABLE sessions ADD COLUMN selected_model TEXT;

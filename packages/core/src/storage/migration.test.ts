@@ -43,6 +43,8 @@ test("upgrades v1 with a consistent backup including WAL data and preserves hist
     expect(backups).toHaveLength(1);
     const backup = new Database(join(dirname(path), backups[0]!), { readonly: true });
     expect(backup.query("PRAGMA user_version").get()).toEqual({ user_version: 1 });
+    expect(backup.query("PRAGMA journal_mode").get()).toEqual({ journal_mode: "delete" });
+    expect(backup.query("PRAGMA integrity_check").get()).toEqual({ integrity_check: "ok" });
     expect(backup.query("SELECT content FROM messages").get()).toEqual({ content: "Keep this history" });
     backup.close();
 });
@@ -85,6 +87,8 @@ test("upgrades v2 with a WAL-aware backup, preserving model selection and switch
     const backupName = readdirSync(dirname(path)).find((name) => name.includes(".v2-"))!;
     const backup = new Database(join(dirname(path), backupName), { readonly: true });
     expect(backup.query("PRAGMA user_version").get()).toEqual({ user_version: 2 });
+    expect(backup.query("PRAGMA journal_mode").get()).toEqual({ journal_mode: "delete" });
+    expect(backup.query("PRAGMA integrity_check").get()).toEqual({ integrity_check: "ok" });
     expect(backup.query("SELECT content FROM messages").get()).toEqual({ content: "Keep this history" });
     backup.close();
     expect(db.query("PRAGMA user_version").get()).toEqual({ user_version: 3 });
