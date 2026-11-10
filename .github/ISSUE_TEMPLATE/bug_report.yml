@@ -1,0 +1,33 @@
+name: Bug report
+description: Report a reproducible NightOwl alpha problem
+body:
+  - type: markdown
+    attributes:
+      value: Do not include API keys, credentials, private transcripts, or unreviewed exports. Report security issues privately as described in SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: NightOwl version
+      description: Run nightowl --version (or bun run start --version).
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Operating system and terminal
+      description: Include architecture and Bun version when running from source.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Include provider/model IDs if relevant, without credentials or private text.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true

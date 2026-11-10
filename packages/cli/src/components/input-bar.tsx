@@ -3,13 +3,14 @@ import { StatusBar } from "./status-bar";
 import { CommandMenu } from "./command-menu";
 import {useRef,useCallback,useEffect} from "react";
 import type { TextareaRenderable } from "@opentui/core";
-import { useRenderer } from "@opentui/react";
+import { useKeyboard, useRenderer } from "@opentui/react";
 import { useCommandMenu } from "./command-menu/use-command-menu";
-import type { Command } from "./command-menu/types";   
+import type { Command } from "./command-menu/types";
+import { COMMANDS } from "./command-menu/commands";
 import {useToast} from "../providers/toast";
+import { useChat } from "../providers/chat";
 
 type Props={
-    onSubmit: (value:string)=>void;
     disabled?: boolean;
 };
 
@@ -20,11 +21,12 @@ export const TEXTAREA_KEY_BINDINGS: KeyBinding[]=[
     {name : "enter",shift:true , action: "newline"},
 ]
 
-export function InputBar({onSubmit,disabled}:Props){
+export function InputBar({disabled}:Props){
     const textareaRef=useRef<TextareaRenderable | null>(null);
     const onSubmitRef= useRef<()=>void>(()=>{});
     const renderer= useRenderer();
     const toast= useToast();
+    const chat= useChat();
     const {
         showCommandMenu,
         commandQuery,
@@ -48,9 +50,14 @@ export function InputBar({onSubmit,disabled}:Props){
         if(!textarea)return;
         const text = textarea.plainText.trim();
         if(text.length ===0)return;
-        onSubmit(text);
+        // send() refuses while a reply is still streaming; keep the user's
+        // text in the box instead of throwing it away.
+        if(!chat.send(text)){
+            if(chat.status === "streaming") toast.show({message:"NightOwl is still replying. Press Esc to stop it."});
+            return;
+        }
         textarea.setText("");
-    },[disabled,onSubmit]);
+    },[disabled,chat.send,chat.status,toast]);
 
     const handleCommand= useCallback((
         command: Command | undefined
@@ -62,11 +69,29 @@ export function InputBar({onSubmit,disabled}:Props){
             command.action({
                 exit:()=>renderer.destroy(),
                 toast,
+                chat,
             });
         }else{
             textarea.insertText(command.value + " ");
         }
-    },[renderer,toast]);
+    },[renderer,toast,chat]);
+
+    // Esc stops a streaming reply. When the command menu is open, Esc belongs
+    // to the menu (it closes it), so we leave it alone. OpenTUI runs every
+    // useKeyboard listener for each key, so this check is what prevents one
+    // Esc press from doing both things.
+    useKeyboard((key)=>{
+        // The renderer is created with exitOnCtrlC:false, so quitting is our job.
+        if(key.ctrl && key.name === "c"){
+            renderer.destroy();
+            return;
+        }
+        if(disabled)return;
+        if(key.name !== "escape" || showCommandMenu)return;
+        if(chat.status === "streaming"){
+            chat.stop();
+        }
+    });
 
     // Must depend on resolveCommand: it closes over the *filtered* list,
     // so an empty deps array would always resolve against the full list.
@@ -85,6 +110,12 @@ export function InputBar({onSubmit,disabled}:Props){
 
     onSubmitRef.current=()=>{
         if(disabled)return;
+        // A pasted command + Enter can arrive before React renders the menu.
+        const exactCommand = COMMANDS.find((command) => command.value === textareaRef.current?.plainText.trim());
+        if(exactCommand){
+            handleCommand(exactCommand);
+            return;
+        }
         if(showCommandMenu){
             const command = resolveCommand(selectedIndex);
             handleCommand(command);
@@ -96,6 +127,7 @@ export function InputBar({onSubmit,disabled}:Props){
     return (
         <box width="100%" alignItems="center">
             <box
+                width="100%"
                 border={["left","right"]}
                 borderColor="brightcyan">
                 <box
@@ -127,10 +159,11 @@ export function InputBar({onSubmit,disabled}:Props){
                     )}
                     <textarea 
                         ref={textareaRef}
+                        maxHeight={8}
                         focused={!disabled}
                         keyBindings={TEXTAREA_KEY_BINDINGS}
                         onContentChange={handelTextareaContentChange}
-                        placeholder="Type your command here..."
+                        placeholder="Ask anything...  (type / for commands)"
                     />
                     <StatusBar/>
                 </box>

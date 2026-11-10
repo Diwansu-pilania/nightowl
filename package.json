@@ -1,8 +1,18 @@
 {
   "name": "nightowl",
-  "version": "1.0.0",
+  "version": "0.1.0-alpha.1",
+  "private": true,
+  "license": "MIT",
+  "packageManager": "bun@1.4.2",
+  "engines": { "bun": ">=1.4.2" },
   "workspaces": ["packages/*"],
   "scripts": {
-    "dev:cli":"bun run --watch packages/cli/src/index.tsx"
+    "dev:cli":"bun run --watch packages/cli/src/index.tsx",
+    "start": "bun run packages/cli/src/index.tsx",
+    "build:cli": "bun run scripts/build.ts",
+    "package:release": "bun run scripts/package-release.ts",
+    "smoke:package": "bun run scripts/smoke-package.ts",
+    "test": "bun run --filter '*' test",
+    "typecheck": "bun run --filter '*' typecheck"
   }
 }
