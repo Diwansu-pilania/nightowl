@@ -1,7 +1,7 @@
 # NightOwl
 
 A local terminal chat harness that keeps your conversation and task notes when
-you switch models. **v0.1.0-alpha.1** connects to cloud models through
+you switch models. **v0.1.0-alpha.2** connects to cloud models through
 **OpenRouter** or local models through **Ollama**. This is a continuity alpha;
 file editing and command execution are planned for a later release.
 
@@ -30,7 +30,10 @@ Built with TypeScript, React, Bun, and [OpenTUI](https://github.com/sst/opentui)
 
 Download the ZIP and matching `.sha256` file from
 [GitHub Releases](https://github.com/Diwansu-pilania/nightowl/releases).
-Extract the ZIP, open PowerShell in the extracted folder, and run:
+Choose **v0.1.0-alpha.2 or newer**: alpha.1 has a ZIP layout bug that can cause
+Windows "Extract all" to reject the archive or WinRAR to report a folder error.
+Extract the ZIP with Windows **Extract all** or WinRAR, open PowerShell in the
+extracted folder, and run:
 
 ```powershell
 .\nightowl.exe --setup
@@ -38,7 +41,7 @@ Extract the ZIP, open PowerShell in the extracted folder, and run:
 
 The archive includes the runtime; you do not need Bun or Node.js. Keep its license
 files. The binary is unsigned. Check the downloaded ZIP with
-`Get-FileHash .\nightowl-v0.1.0-alpha.1-windows-x64.zip -Algorithm SHA256`
+`Get-FileHash .\nightowl-v0.1.0-alpha.2-windows-x64.zip -Algorithm SHA256`
 against the supplied checksum. A checksum detects changes; it does not authenticate
 the publisher. Only download from this repository's releases.
 

@@ -62,7 +62,11 @@ writeFileSync(join(staging, "BUN-LICENSE.md"), await bunLicense.text());
 writeFileSync(join(staging, "REBUILD.md"), `This distribution embeds Bun 1.4.2 and OpenTUI native code.\n\nNightOwl source: https://github.com/Diwansu-pilania/nightowl/tree/v${metadata.version}\nBun source: https://github.com/oven-sh/bun/tree/bun-v1.4.2\n\nSee BUN-LICENSE.md for Bun's linked libraries and WebKit rebuilding instructions.\nTo rebuild NightOwl with a modified Bun runtime, install this tag's dependencies\nwith bun install --frozen-lockfile, then use that Bun executable to run scripts/build.ts.\nThe application source and dependency lockfile are included in GitHub's source archive.\n`);
 const archive = join(output, `${name}.zip`);
 if (existsSync(archive)) throw new Error(`Release archive already exists: ${archive}. Use a new version or remove the inspected generated artifact first.`);
-const tar = Bun.spawnSync(["tar", "-a", "-cf", archive, "-C", staging, "."], { stdout: "inherit", stderr: "inherit" });
+// Passing "." adds a literal "./" ZIP entry. Explorer's Extract all rejects
+// that entry, and WinRAR can report a destination-folder creation error.
+// Explicit relative names also avoid "./" prefixes on nested entries.
+const entries = readdirSync(staging).sort();
+const tar = Bun.spawnSync(["tar", "-a", "-cf", archive, "-C", staging, ...entries], { stdout: "inherit", stderr: "inherit" });
 if (tar.exitCode !== 0) throw new Error("Could not create release archive.");
 const hash = createHash("sha256").update(readFileSync(archive)).digest("hex");
 writeFileSync(`${archive}.sha256`, `${hash}  ${name}.zip\n`);

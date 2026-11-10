@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.0-alpha.2 — 2026-11-11
+
+Fix Windows release ZIP extraction. The alpha.1 archive contained a `./` root
+directory and `./`-prefixed paths from the packaging command. Windows Explorer
+rejected it as invalid, and WinRAR could report a folder-creation error.
+Archives now contain ordinary relative paths. Release smoke checks reject dot
+directories and extract with PowerShell's ZIP reader instead of the packager's
+tar reader. The app's chat behavior and saved-data format are unchanged.
+
 ## 0.1.0-alpha.1 — 2026-11-11
 
 First continuity alpha: local terminal chat with OpenRouter and Ollama, provider
