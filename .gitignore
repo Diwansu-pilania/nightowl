@@ -27,6 +27,16 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 .cache
 *.tsbuildinfo
 
+# Local NightOwl state (including custom data directories inside a checkout)
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+# Optional saved provider keys, including a custom data directory in this checkout
+credentials.json
+.credentials.json.*.tmp
+# Default portable chat exports contain private conversation text.
+*.nightowl.json
+
 # IntelliJ based IDEs
 .idea
 
