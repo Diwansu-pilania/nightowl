@@ -7,6 +7,16 @@ file editing and command execution are planned for a later release.
 
 Built with TypeScript, React, Bun, and [OpenTUI](https://github.com/sst/opentui).
 
+## Terminal demo
+
+[![Watch the NightOwl terminal demo: real chat, model switching, task notes, and resume](docs/media/terminal-demo.png)](docs/media/terminal-demo.mp4)
+
+**[Watch the 47-second terminal video](docs/media/terminal-demo.mp4).**
+See real OpenRouter replies, a model switch in the same conversation, saved task
+notes, and a restart. Recorded terminal output is replayed with pauses removed,
+titles, and camera moves. Ollama appears in the provider picker; the recorded
+chat uses OpenRouter. [Recording details](docs/media/README.md).
+
 ## Features
 
 - Streaming chat: replies appear word by word; **Esc** stops one mid-way
@@ -23,6 +33,17 @@ Built with TypeScript, React, Bun, and [OpenTUI](https://github.com/sst/opentui)
 - Chat and input use the terminal width, with basic Markdown and code display
 - `/rename`, `/export`, and `/import` for portable text conversations and task notes
 - Headless end-to-end UI tests with a mock model
+
+## How it fits together
+
+The terminal UI renders a session owned by `packages/core`. The core builds
+budgeted context, saves conversation state locally, and streams replies through
+the selected provider. The diagram separates NightOwl's local state from the
+model services it connects to.
+
+![NightOwl architecture: terminal UI, session controller, context builder, SQLite storage, and OpenRouter or Ollama](docs/diagrams/architecture.png)
+
+All diagrams have [editable Excalidraw sources and an editing guide](docs/diagrams/README.md).
 
 ## Quick start
 
@@ -74,6 +95,8 @@ Use `bun run dev:cli` when developing with automatic reloads.
 
 ## Change models during a conversation
 
+![Model switching flow: validate the destination, stop an active reply if confirmed, save the selection, then wait for the next instruction](docs/diagrams/model-switching.png)
+
 1. Enter `/models` and choose Ollama or OpenRouter.
 2. Search the model list, use the arrow keys, and press Enter.
 3. If a reply is running, confirm whether to stop it and switch. Its partial
@@ -111,6 +134,8 @@ directory. `/new` starts another conversation and `/sessions` opens the picker;
 older conversations are kept. A selected conversation can only be edited by one
 NightOwl process at a time.
 
+![Session lifecycle: save the turn and context before the model call, checkpoint streaming text, flush final status, and recover interrupted attempts on restart](docs/diagrams/session-lifecycle.png)
+
 ```bash
 bun run start --new
 bun run start --sessions
@@ -142,6 +167,12 @@ timestamped `.sqlite` file beside the database and upgraded to v3. Close other
 NightOwl processes before upgrading. Older NightOwl builds cannot open v3 data.
 
 ## Context and task memory
+
+The next model receives context assembled for its own limits. Task notes and
+the latest instruction are protected; older history may become labeled excerpts.
+The complete original transcript remains saved locally.
+
+![Context assembly: filter saved history, include task notes, calculate the input budget, refuse oversized required input, and save context before sending](docs/diagrams/context-assembly.png)
 
 `/context` shows the estimated input size, context window, reserved reply tokens,
 and which messages are included, excerpted, or excluded. Press **B** to set a

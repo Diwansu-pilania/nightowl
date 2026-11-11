@@ -4,6 +4,11 @@ Implemented on 10 November 2026. NightOwl supports OpenRouter API keys and an
 Ollama server, with manual provider/model switching while keeping the same
 persisted conversation.
 
+![Same-session model switching: validate, confirm stopping an active reply, persist the new selection, and use it on the next message](diagrams/model-switching.png)
+
+[Editable Excalidraw source](diagrams/model-switching.excalidraw) ·
+[Diagram guide](diagrams/README.md).
+
 ## User flow
 
 Run `bun run start --setup`, or enter `/models` in a chat. Choose a provider,

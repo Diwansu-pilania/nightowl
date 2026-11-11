@@ -4,6 +4,11 @@ Implemented on 10 November 2026. This builds on Phase 1 and changes ownership of
 chat state: `packages/core` now owns the session and `packages/cli` renders it.
 Updated for [provider switching](provider-switching.md) and [context management](context-and-memory.md).
 
+![Persistence and recovery: save before network, checkpoint streaming text, flush status, and recover unfinished attempts without retrying](diagrams/session-lifecycle.png)
+
+[Editable Excalidraw source](diagrams/session-lifecycle.excalidraw) ·
+[Diagram guide](diagrams/README.md).
+
 ## Data and lifecycle
 
 - `SessionStore` creates schema version 3 in SQLite. Sessions are workspace

@@ -5,6 +5,11 @@ build plan: bounded requests and explicit session memory, with no model-generate
 summary calls. The user independently confirmed OpenRouter chat works; this
 milestone's automated inference checks use fixtures, not a paid account.
 
+![Request context assembly: saved history, task notes, model limits, required-input checks, local excerpts, and a persisted request record](diagrams/context-assembly.png)
+
+[Editable Excalidraw source](diagrams/context-assembly.excalidraw) ·
+[Diagram guide](diagrams/README.md).
+
 ## Request assembly
 
 The core's `context/builder.ts` builds each request from original saved messages.

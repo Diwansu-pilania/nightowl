@@ -10,6 +10,10 @@ messages, and persistence belong in packages/core; core must not import React.
 Preserve original transcripts, transactional state changes, and explicit
 provider boundaries. Include migrations and recovery tests for schema changes.
 
+When changing a documented flow, update its [Excalidraw diagram](docs/diagrams/README.md)
+and PNG export together. Diagram sources live beside their rendered images in
+`docs/diagrams`; the README and implementation guides share the same exports.
+
 Keep changes small and describe the user-visible problem and validation in
 pull requests. Report bugs with OS, Bun version, NightOwl version, sanitized
 reproduction steps, and expected/actual behavior. For security issues, see
